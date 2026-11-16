@@ -79,6 +79,18 @@ pruning run relative to the default repository checkout.
 - Original model weights and VQAv2 images were not retained in these archives;
   a future GPU run must restore or redownload those assets.
 
+## Required change for next experiments
+
+- Update every pruning worker for the visual encoder, connector, full-model
+  pruning, and future LLM reruns to record both `kept_indices` and
+  `removed_indices` for every pruned module in `pruning_summary.json`.
+- Continue recording the module/layer name, original width, new width, removed
+  fraction, calibration split, seed, importance method, and source commit.
+- The exact channel lists are required when comparing overlap between pruning
+  levels, reproducing a selected model, or auditing which structural units were
+  removed. The existing 10%, 20%, and 30% LLM archives contain layer-level
+  summaries only, so they cannot recover the individual channel indices.
+
 ## Operational notes
 
 - The first direct call to `run_single_pruning_experiment.py` was rejected with
