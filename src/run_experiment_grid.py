@@ -56,7 +56,11 @@ def main():
     parser.add_argument("--run", action="store_true", help="Run enabled experiments through --worker")
     parser.add_argument("--resume", action="store_true", help="Skip experiments with completed markers")
     parser.add_argument("--only", action="append", help="Run only these experiment IDs")
-    parser.add_argument("--worker", default="src/run_single_experiment.py")
+    parser.add_argument("--worker", default="src/run_single_pruning_experiment.py")
+    parser.add_argument("--model-dir", default="/workspace/models/xgen-mm-phi3-mini-instruct-interleave-r-v1.5")
+    parser.add_argument("--dataset-root", default="/workspace/data/vqav2/5k")
+    parser.add_argument("--cache-dir", default="/workspace/models/huggingface")
+    parser.add_argument("--save-temp-checkpoint", action="store_true")
     args = parser.parse_args()
     if not args.plan and not args.run:
         parser.error("choose --plan or --run")
@@ -103,7 +107,12 @@ def main():
             str(worker),
             "--config", str(exp_dir / "config.json"),
             "--output-dir", str(exp_dir),
+            "--model-dir", args.model_dir,
+            "--dataset-root", args.dataset_root,
+            "--cache-dir", args.cache_dir,
         ]
+        if args.save_temp_checkpoint:
+            command.append("--save-temp-checkpoint")
         write_json(exp_dir / "started.json", {
             "status": "running",
             "started_at_utc": start,

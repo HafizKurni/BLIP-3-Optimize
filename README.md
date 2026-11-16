@@ -112,7 +112,7 @@ The existing `src/pruning_poc.py` is an exploratory visual-tokenizer test. It is
 
 ## Prepared experiment grid
 
-The cost-controlled grid is defined in `configs/experiment_grid.json`. It starts with two language-model FFN pruning runs and one INT8 run enabled. The remaining configurations are present but disabled until the first pilot runs pass.
+The cost-controlled grid is defined in `configs/experiment_grid.json`. It starts with two language-model FFN pruning runs enabled. Quantization and combined compression remain disabled until the pruning phase is complete.
 
 Prepare a local or Vast.ai workspace with:
 
@@ -126,14 +126,16 @@ python3 src/run_experiment_grid.py \
 The grid runner is resumable. Once the architecture-specific worker is validated, start it with:
 
 ```bash
+python3 scripts/prepare_question_splits.py \
+  --base /workspace/data/vqav2/5k
+
 python3 src/run_experiment_grid.py \
   --config configs/experiment_grid.json \
   --output-root /workspace/outputs \
-  --run --resume \
-  --worker src/run_single_experiment.py
+  --run --resume
 ```
 
-The worker is deliberately kept separate from the grid runner because BLIP-3's fused projections require architecture-specific slicing. The runner will refuse to start a paid run until that worker exists. It writes one `completion.json` marker per configuration, so a restarted session skips configurations that already completed.
+The pruning worker is separate from the grid runner because BLIP-3's fused projections require architecture-specific slicing. It currently supports language-model FFN intermediate-channel pruning using activation-times-weight-norm importance. It writes one `completion.json` marker per configuration, so a restarted session skips configurations that already completed.
 
 Read `EXPERIMENT_PROTOCOL.md` before enabling the remaining grid. It defines the frozen data partitions, output contract, pilot gate, and the no-temporary-checkpoint storage policy.
 
