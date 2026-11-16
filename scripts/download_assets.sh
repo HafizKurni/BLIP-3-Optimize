@@ -12,6 +12,7 @@ MODEL_DIR="${ROOT_DIR}/models/xgen-mm-phi3-mini-instruct-interleave-r-v1.5"
 DATA_DIR="${ROOT_DIR}/data/vqav2/5k"
 RAW_DIR="${ROOT_DIR}/data/raw_vqav2"
 CLEANUP_RAW="${CLEANUP_RAW:-0}"
+FROZEN_METADATA_DIR="${FROZEN_METADATA_DIR:-${SCRIPT_ROOT}/data/metadata}"
 
 QUESTIONS_URL="https://s3.amazonaws.com/cvmlp/vqa/mscoco/vqa/v2_Questions_Val_mscoco.zip"
 ANNOTATIONS_URL="https://s3.amazonaws.com/cvmlp/vqa/mscoco/vqa/v2_Annotations_Val_mscoco.zip"
@@ -44,13 +45,19 @@ download() {
   fi
 }
 
-echo "[2/5] Downloading VQAv2 questions and annotations"
-download "${QUESTIONS_URL}" "${RAW_DIR}/questions_val.zip"
-download "${ANNOTATIONS_URL}" "${RAW_DIR}/annotations_val.zip"
-unzip -o "${RAW_DIR}/questions_val.zip" -d "${RAW_DIR}"
-unzip -o "${RAW_DIR}/annotations_val.zip" -d "${RAW_DIR}"
-cp "${RAW_DIR}/v2_OpenEnded_mscoco_val2014_questions.json" "${DATA_DIR}/"
-cp "${RAW_DIR}/v2_mscoco_val2014_annotations.json" "${DATA_DIR}/"
+echo "[2/5] Preparing VQAv2 questions and annotations"
+if [[ -f "${FROZEN_METADATA_DIR}/vqav2_5040_questions.json" && -f "${FROZEN_METADATA_DIR}/vqav2_5040_annotations.json" ]]; then
+  echo "Using frozen 5,040-question metadata from ${FROZEN_METADATA_DIR}"
+  cp "${FROZEN_METADATA_DIR}/vqav2_5040_questions.json" "${DATA_DIR}/v2_OpenEnded_mscoco_val2014_questions.json"
+  cp "${FROZEN_METADATA_DIR}/vqav2_5040_annotations.json" "${DATA_DIR}/v2_mscoco_val2014_annotations.json"
+else
+  download "${QUESTIONS_URL}" "${RAW_DIR}/questions_val.zip"
+  download "${ANNOTATIONS_URL}" "${RAW_DIR}/annotations_val.zip"
+  unzip -o "${RAW_DIR}/questions_val.zip" -d "${RAW_DIR}"
+  unzip -o "${RAW_DIR}/annotations_val.zip" -d "${RAW_DIR}"
+  cp "${RAW_DIR}/v2_OpenEnded_mscoco_val2014_questions.json" "${DATA_DIR}/"
+  cp "${RAW_DIR}/v2_mscoco_val2014_annotations.json" "${DATA_DIR}/"
+fi
 
 echo "[3/5] Creating frozen question splits"
 python3 "${SCRIPT_ROOT}/scripts/prepare_question_splits.py" --base "${DATA_DIR}"

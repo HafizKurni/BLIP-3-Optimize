@@ -9,6 +9,10 @@ venv/
 # Local model, dataset, cache, and experiment data
 models/
 data/
+!data/
+!data/metadata/
+!data/metadata/*.json
+!data/metadata/*.jsonl
 outputs/
 configs/local*
 .hf_home/

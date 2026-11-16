@@ -153,6 +153,8 @@ bash scripts/download_assets.sh /workspace
 
 The official VQAv2 download page provides the validation questions, annotations, and COCO validation images. The BLIP-3 model is downloaded from the Salesforce Hugging Face repository. The model is about 8.7 GB, so use persistent storage and allow enough disk space for the temporary COCO archive. The raw downloads are not committed to Git.
 
+The repository also contains the previously prepared 5,040-question metadata under `data/metadata/`. Because that subset matches the completed baseline, `download_assets.sh` uses it automatically when present. It still downloads COCO images, but copies only the 4,584 referenced images instead of the entire validation image set.
+
 After the download, verify:
 
 ```bash
