@@ -5,6 +5,7 @@ set -euo pipefail
 # Linux volume. The model revision should be pinned to the revision used for
 # the completed baseline when that value is available.
 ROOT_DIR="${1:-/workspace}"
+SCRIPT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MODEL_ID="Salesforce/xgen-mm-phi3-mini-instruct-interleave-r-v1.5"
 MODEL_REVISION="${MODEL_REVISION:-main}"
 MODEL_DIR="${ROOT_DIR}/models/xgen-mm-phi3-mini-instruct-interleave-r-v1.5"
@@ -52,7 +53,7 @@ cp "${RAW_DIR}/v2_OpenEnded_mscoco_val2014_questions.json" "${DATA_DIR}/"
 cp "${RAW_DIR}/v2_mscoco_val2014_annotations.json" "${DATA_DIR}/"
 
 echo "[3/5] Creating frozen question splits"
-python3 "${ROOT_DIR}/scripts/prepare_question_splits.py" --base "${DATA_DIR}"
+python3 "${SCRIPT_ROOT}/scripts/prepare_question_splits.py" --base "${DATA_DIR}"
 
 echo "[4/5] Downloading COCO validation images"
 download "${IMAGES_URL}" "${RAW_DIR}/val2014.zip"
@@ -61,7 +62,7 @@ if [[ ! -d "${RAW_DIR}/val2014" ]]; then
 fi
 
 echo "[5/5] Keeping only images referenced by the evaluation questions"
-python3 "${ROOT_DIR}/select_vqa_images.py" \
+python3 "${SCRIPT_ROOT}/select_vqa_images.py" \
   --source-images "${RAW_DIR}/val2014" \
   --dataset-dir "${DATA_DIR}" \
   --questions "${DATA_DIR}/v2_OpenEnded_mscoco_val2014_questions.json" \
