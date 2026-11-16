@@ -52,7 +52,7 @@ outputs/experiments/<experiment_id>/
 
 Do not run the full evaluation for a configuration that failed to construct, save, reload, generate one answer, or complete the pilot. Preserve the error and mark the configuration as failed.
 
-Start with the enabled configurations in `configs/experiment_grid.json`: language-model FFN pruning at 5% and 10%, plus INT8 weight-only quantization. Enable the remaining grid only after these configurations pass the pilot gate.
+The final thesis grid contains fourteen compressed configurations: nine component-level runs (three components at 10%, 20%, and 30%), three full-model runs, one INT8 run, and one combined full-model-30%-plus-INT8 run. The repository initially enables only `prune_lm_10` because the current worker validates language-model FFN pruning first. Enable the other language-model levels after the first pilot passes, then implement and validate the visual-encoder, connector, and full-model workers before enabling their configurations.
 
 ## Vast.ai lifecycle
 

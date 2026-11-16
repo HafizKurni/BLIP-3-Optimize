@@ -6,11 +6,7 @@
     "baseline_accuracy": 0.7945,
     "seed": 42,
     "dtype": "bfloat16",
-    "decoding": {
-      "do_sample": false,
-      "num_beams": 1,
-      "max_new_tokens": 10
-    },
+    "decoding": {"do_sample": false, "num_beams": 1, "max_new_tokens": 10},
     "dataset": {
       "root": "/workspace/data/vqav2/5k",
       "evaluation_count": 5040,
@@ -36,111 +32,19 @@
     }
   },
   "experiments": [
-    {
-      "id": "prune_lm_ffn_05",
-      "enabled": true,
-      "priority": 1,
-      "method": "structured_pruning",
-      "component": "language_model",
-      "unit": "ffn_intermediate_channel",
-      "fraction": 0.05,
-      "importance": "activation_times_weight_norm",
-      "pilot_required": true,
-      "full_evaluation_after_pilot": true
-    },
-    {
-      "id": "prune_lm_ffn_10",
-      "enabled": true,
-      "priority": 2,
-      "method": "structured_pruning",
-      "component": "language_model",
-      "unit": "ffn_intermediate_channel",
-      "fraction": 0.1,
-      "importance": "activation_times_weight_norm",
-      "pilot_required": true,
-      "full_evaluation_after_pilot": true
-    },
-    {
-      "id": "prune_lm_ffn_15",
-      "enabled": false,
-      "priority": 3,
-      "method": "structured_pruning",
-      "component": "language_model",
-      "unit": "ffn_intermediate_channel",
-      "fraction": 0.15,
-      "importance": "activation_times_weight_norm",
-      "pilot_required": true,
-      "full_evaluation_after_pilot": true
-    },
-    {
-      "id": "prune_lm_ffn_20",
-      "enabled": false,
-      "priority": 4,
-      "method": "structured_pruning",
-      "component": "language_model",
-      "unit": "ffn_intermediate_channel",
-      "fraction": 0.2,
-      "importance": "activation_times_weight_norm",
-      "pilot_required": true,
-      "full_evaluation_after_pilot": true
-    },
-    {
-      "id": "prune_lm_ffn_30",
-      "enabled": false,
-      "priority": 5,
-      "method": "structured_pruning",
-      "component": "language_model",
-      "unit": "ffn_intermediate_channel",
-      "fraction": 0.3,
-      "importance": "activation_times_weight_norm",
-      "pilot_required": true,
-      "full_evaluation_after_pilot": true
-    },
-    {
-      "id": "prune_visual_ffn_10",
-      "enabled": false,
-      "priority": 10,
-      "method": "structured_pruning",
-      "component": "visual_encoder",
-      "unit": "ffn_intermediate_channel",
-      "fraction": 0.1,
-      "importance": "activation_times_weight_norm",
-      "pilot_required": true,
-      "full_evaluation_after_pilot": true
-    },
-    {
-      "id": "prune_connector_ffn_10",
-      "enabled": false,
-      "priority": 11,
-      "method": "structured_pruning",
-      "component": "connector",
-      "unit": "ffn_intermediate_channel",
-      "fraction": 0.1,
-      "importance": "activation_times_weight_norm",
-      "pilot_required": true,
-      "full_evaluation_after_pilot": true
-    },
-    {
-      "id": "quant_int8_weight_only",
-      "enabled": false,
-      "priority": 20,
-      "method": "post_training_quantization",
-      "quantization": "int8_weight_only",
-      "pilot_required": true,
-      "full_evaluation_after_pilot": true
-    },
-    {
-      "id": "prune_lm_ffn_10_int8",
-      "enabled": false,
-      "priority": 30,
-      "method": "combined",
-      "component": "language_model",
-      "unit": "ffn_intermediate_channel",
-      "fraction": 0.1,
-      "importance": "activation_times_weight_norm",
-      "quantization": "int8_weight_only",
-      "pilot_required": true,
-      "full_evaluation_after_pilot": true
-    }
+    {"id": "prune_lm_10", "enabled": true, "priority": 1, "track": "component", "method": "structured_pruning", "component": "language_model", "unit": "ffn_intermediate_channel", "fraction": 0.1, "importance": "activation_times_weight_norm", "pilot_required": true, "full_evaluation_after_pilot": true},
+    {"id": "prune_lm_20", "enabled": false, "priority": 2, "track": "component", "method": "structured_pruning", "component": "language_model", "unit": "ffn_intermediate_channel", "fraction": 0.2, "importance": "activation_times_weight_norm", "pilot_required": true, "full_evaluation_after_pilot": true},
+    {"id": "prune_lm_30", "enabled": false, "priority": 3, "track": "component", "method": "structured_pruning", "component": "language_model", "unit": "ffn_intermediate_channel", "fraction": 0.3, "importance": "activation_times_weight_norm", "pilot_required": true, "full_evaluation_after_pilot": true},
+    {"id": "prune_visual_10", "enabled": false, "priority": 10, "track": "component", "method": "structured_pruning", "component": "visual_encoder", "unit": "ffn_intermediate_channel", "fraction": 0.1, "importance": "activation_times_weight_norm", "pilot_required": true, "full_evaluation_after_pilot": true},
+    {"id": "prune_visual_20", "enabled": false, "priority": 11, "track": "component", "method": "structured_pruning", "component": "visual_encoder", "unit": "ffn_intermediate_channel", "fraction": 0.2, "importance": "activation_times_weight_norm", "pilot_required": true, "full_evaluation_after_pilot": true},
+    {"id": "prune_visual_30", "enabled": false, "priority": 12, "track": "component", "method": "structured_pruning", "component": "visual_encoder", "unit": "ffn_intermediate_channel", "fraction": 0.3, "importance": "activation_times_weight_norm", "pilot_required": true, "full_evaluation_after_pilot": true},
+    {"id": "prune_connector_10", "enabled": false, "priority": 20, "track": "component", "method": "structured_pruning", "component": "connector", "unit": "ffn_intermediate_channel", "fraction": 0.1, "importance": "activation_times_weight_norm", "pilot_required": true, "full_evaluation_after_pilot": true},
+    {"id": "prune_connector_20", "enabled": false, "priority": 21, "track": "component", "method": "structured_pruning", "component": "connector", "unit": "ffn_intermediate_channel", "fraction": 0.2, "importance": "activation_times_weight_norm", "pilot_required": true, "full_evaluation_after_pilot": true},
+    {"id": "prune_connector_30", "enabled": false, "priority": 22, "track": "component", "method": "structured_pruning", "component": "connector", "unit": "ffn_intermediate_channel", "fraction": 0.3, "importance": "activation_times_weight_norm", "pilot_required": true, "full_evaluation_after_pilot": true},
+    {"id": "prune_full_10", "enabled": false, "priority": 30, "track": "full_model", "method": "structured_pruning", "component": "all_three", "unit": "eligible_structural_units", "fraction": 0.1, "importance": "activation_times_weight_norm", "pilot_required": true, "full_evaluation_after_pilot": true},
+    {"id": "prune_full_20", "enabled": false, "priority": 31, "track": "full_model", "method": "structured_pruning", "component": "all_three", "unit": "eligible_structural_units", "fraction": 0.2, "importance": "activation_times_weight_norm", "pilot_required": true, "full_evaluation_after_pilot": true},
+    {"id": "prune_full_30", "enabled": false, "priority": 32, "track": "full_model", "method": "structured_pruning", "component": "all_three", "unit": "eligible_structural_units", "fraction": 0.3, "importance": "activation_times_weight_norm", "pilot_required": true, "full_evaluation_after_pilot": true},
+    {"id": "quant_int8_weight_only", "enabled": false, "priority": 40, "track": "quantization", "method": "post_training_quantization", "component": "all_three", "quantization": "int8_weight_only", "pilot_required": true, "full_evaluation_after_pilot": true},
+    {"id": "prune_full_30_int8", "enabled": false, "priority": 50, "track": "combined", "method": "combined", "component": "all_three", "unit": "eligible_structural_units", "fraction": 0.3, "importance": "activation_times_weight_norm", "quantization": "int8_weight_only", "pilot_required": true, "full_evaluation_after_pilot": true}
   ]
 }

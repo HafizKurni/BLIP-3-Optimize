@@ -101,18 +101,18 @@ The baseline uses seed 42, deterministic greedy decoding, BF16 inference, ten wa
 
 ## Compression work order
 
-1. Reproduce and archive the uncompressed baseline.
-2. Implement and validate feed-forward channel pruning.
-3. Save/reload the compressed checkpoint and run a one-sample smoke test.
-4. Run the pilot and compare accuracy, latency, memory, and model size.
-5. Test INT8 quantization.
-6. Evaluate combined pruning plus quantization.
+1. Prune the language-model FFN channels at 10%, 20%, and 30%.
+2. Prune the visual encoder at 10%, 20%, and 30%.
+3. Prune the connector at 10%, 20%, and 30%.
+4. Prune all three components together at 10%, 20%, and 30%.
+5. Test INT8 quantization on the whole model.
+6. Apply 30% full-model pruning followed by INT8 quantization.
 
 The existing `src/pruning_poc.py` is an exploratory visual-tokenizer test. It is not yet a validated thesis configuration; preserve its output as a feasibility record and do not present it as a completed pruning result.
 
 ## Prepared experiment grid
 
-The cost-controlled grid is defined in `configs/experiment_grid.json`. It starts with two language-model FFN pruning runs enabled. Quantization and combined compression remain disabled until the pruning phase is complete.
+The cost-controlled grid is defined in `configs/experiment_grid.json` and matches the fifteen-configuration thesis design: one baseline plus fourteen compressed configurations. Only `prune_lm_10` is enabled initially; other configurations are opened after their worker and pilot gate are validated.
 
 Prepare a local or Vast.ai workspace with:
 
