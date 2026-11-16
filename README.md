@@ -139,6 +139,30 @@ The pruning worker is separate from the grid runner because BLIP-3's fused proje
 
 Read `EXPERIMENT_PROTOCOL.md` before enabling the remaining grid. It defines the frozen data partitions, output contract, pilot gate, and the no-temporary-checkpoint storage policy.
 
+## Download model and VQAv2 assets on Vast.ai
+
+The model weights and VQAv2/COCO data are downloaded outside GitHub. The helper first downloads the public BLIP-3 checkpoint, then VQAv2 validation questions and annotations, then COCO `val2014.zip`. It copies only the images referenced by the evaluation questions into the working dataset directory.
+
+Run this after cloning the repository and installing the requirements:
+
+```bash
+export MODEL_REVISION=main  # replace with the exact baseline revision when recorded
+export CLEANUP_RAW=1        # remove temporary full COCO archive and extracted folder after copying
+bash scripts/download_assets.sh /workspace
+```
+
+The official VQAv2 download page provides the validation questions, annotations, and COCO validation images. The BLIP-3 model is downloaded from the Salesforce Hugging Face repository. The model is about 8.7 GB, so use persistent storage and allow enough disk space for the temporary COCO archive. The raw downloads are not committed to Git.
+
+After the download, verify:
+
+```bash
+test -f /workspace/models/xgen-mm-phi3-mini-instruct-interleave-r-v1.5/config.json
+test -f /workspace/data/vqav2/5k/v2_OpenEnded_mscoco_val2014_questions.json
+test -f /workspace/data/vqav2/5k/v2_mscoco_val2014_annotations.json
+test -f /workspace/data/vqav2/5k/question_splits.json
+find /workspace/data/vqav2/5k/images/val2014 -type f | wc -l
+```
+
 ## VPS use
 
 Upload this folder to the temporary GPU instance, run the pilot, download `outputs/`, and delete the instance. Keep `models/` on local storage or a persistent cloud-backed volume; do not assume the VPS disk survives deletion.
