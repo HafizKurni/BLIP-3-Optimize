@@ -1,0 +1,17 @@
+services:
+  rcvqa:
+    build: .
+    image: rcvqa-blip3:pilot
+    working_dir: /workspace
+    stdin_open: true
+    tty: true
+    gpus: all
+    volumes:
+      - ./models:/workspace/models
+      - ./data:/workspace/data
+      - ./outputs:/workspace/outputs
+      - ./src:/workspace/src
+      - ./configs:/workspace/configs
+    environment:
+      HF_HOME: /workspace/models/huggingface
+      TRANSFORMERS_CACHE: /workspace/models/huggingface

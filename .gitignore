@@ -1,0 +1,39 @@
+# Python and local tooling
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.DS_Store
+
+# Local model, dataset, cache, and experiment data
+models/
+data/
+outputs/
+configs/local*
+.hf_home/
+.cache/
+
+# Generated archives and QA/rendering artifacts
+*.zip
+*.tar
+*.tar.gz
+.codex-build/
+.codex-output/
+render_qa/
+render_qa_final/
+qa_preliminary/
+baseline_download/
+
+# Local credentials and connection details
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+id_rsa*
+
+# Large or non-source thesis/presentation artifacts
+*.docx
+*.pdf
+proposal_revision_pack_extracted.txt
