@@ -62,6 +62,23 @@ pruning run relative to the default repository checkout.
 - The planned compressed backup is:
   `/workspace/outputs/lm_pruning_results.tar.gz`.
 
+## Local recovery copies
+
+- Local copies of all three completed runs are stored as:
+  `outputs/downloads/prune_lm_10.tar.gz`,
+  `outputs/downloads/prune_lm_20.tar.gz`, and
+  `outputs/downloads/prune_lm_30.tar.gz`.
+- The files were originally named `.zip` by the remote shell command, but the
+  actual format is gzip-compressed tar; the local copies were renamed to the
+  correct `.tar.gz` extension.
+- Extracted recovery contents are under:
+  `outputs/downloads/pruning_results/`.
+- Each archive contains the per-run configuration, model layout, pruning
+  summary, pilot/evaluation predictions and metrics, timing passes,
+  environment record, run log, and completion marker.
+- Original model weights and VQAv2 images were not retained in these archives;
+  a future GPU run must restore or redownload those assets.
+
 ## Operational notes
 
 - The first direct call to `run_single_pruning_experiment.py` was rejected with
