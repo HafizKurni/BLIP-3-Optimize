@@ -91,6 +91,21 @@ pruning run relative to the default repository checkout.
   removed. The existing 10%, 20%, and 30% LLM archives contain layer-level
   summaries only, so they cannot recover the individual channel indices.
 
+## Baseline provenance check
+
+- The repository's frozen metadata commit (`63639eb`) and README state that the
+  5,040-question subset matches a previously completed baseline.
+- `configs/experiment_grid.json` records the prior baseline reference accuracy
+  as `0.7945`, and the pruning runs use it for accuracy-retention calculations.
+- The current local workspace does not contain the prior baseline's complete
+  predictions, metrics, environment record, or run manifest; the old
+  `baseline_download/` bundle is empty apart from its README. Therefore
+  `0.7945` is a recorded baseline reference, not a fully auditable local run
+  artifact at this time.
+- The 100-question baseline pilot run performed in this session (`0.831`) is a
+  separate pilot result and must not be substituted for the recorded 5,040-
+  question baseline.
+
 ## Operational notes
 
 - The first direct call to `run_single_pruning_experiment.py` was rejected with
