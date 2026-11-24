@@ -1,68 +1,260 @@
+from copy import deepcopy
+from pathlib import Path
 from docx import Document
+from docx.shared import Pt
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
-from docx.text.paragraph import Paragraph
 
-src = '/Users/hafiz/Desktop/INTI Master Kuliah/Supervisor/Thesis Bimbingan/[Sept] Master_PD_Hafiz_Revised.docx'
-out = '/Users/hafiz/Documents/ChatGPT/Thesis Master Data Science (RCVAQ)/Master_PD_Hafiz_Revised_Updated.docx'
-doc = Document(src)
+SRC = Path('/Users/hafiz/Desktop/INTI Master Kuliah/Supervisor/Persiapan PD dan VIVA/PD Material/[FINAL] Master PD Hafiz.docx')
+OUT = Path('/Users/hafiz/Documents/ChatGPT/Thesis Master Data Science (RCVAQ)/[REVISED] Master PD Hafiz Proposal.docx')
 
-def find(text):
-    for p in doc.paragraphs:
-        if p.text.strip() == text:
-            return p
-    raise ValueError(text)
+doc = Document(str(SRC))
 
-def after(p, text, style='INTI-C'):
-    el = OxmlElement('w:p')
-    p._p.addnext(el)
-    q = Paragraph(el, p._parent)
-    q.style = style
-    q.add_run(text)
-    return q
+def set_text(p, text):
+    # Keep paragraph-level formatting and replace runs cleanly.
+    for child in list(p._p):
+        if child.tag.endswith('}pPr'):
+            continue
+        p._p.remove(child)
+    p.add_run(text)
 
-p = find('The RCVQA environment represents a consumer-grade deployment scenario while remaining controlled and reproducible. Consumer GPUs commonly provide between 6 GB and 12 GB of memory, which is well below the capacity of the servers on which large VLMs are usually evaluated. All experiments are conducted on a single fixed workstation. Because the uncompressed baseline requires more memory than the deployment envelope examined here, measurements are taken on a GPU with enough memory to run the baseline, and the memory limit is applied as an evaluation threshold rather than as the physical capacity of the measurement GPU.')
-p.text = 'The RCVQA deployment scenario is defined using an 8 GB consumer-grade memory envelope while the measurement platform is kept fixed for controlled comparison. All experiments are conducted on one workstation equipped with one NVIDIA GeForce RTX 5090 GPU with 32 GB of VRAM. The RTX 5090 is used because the uncompressed BLIP-3 baseline requires sufficient memory for model loading and inference. The 8 GB value is therefore an evaluation constraint, not the physical memory of the measurement device.'
-after(p, 'The GPU model, VRAM capacity, CPU, system RAM, operating system, NVIDIA driver, CUDA version, PyTorch version, Transformers version, and quantization backend are recorded and fixed throughout the experiment. The same platform and software environment are used for every configuration.')
+def add_table_row(table, values):
+    row = table.add_row()
+    for c, v in zip(row.cells, values):
+        c.text = v
+    return row
 
-p = find('The experiments are implemented in Python using PyTorch. The BLIP-3 checkpoint is loaded through the Hugging Face Transformers library together with the model code supplied with the checkpoint. Weight-only quantization is implemented with a PyTorch-native quantization backend (torchao is the intended backend). VQA answers are scored with a reimplementation of the official VQAv2 evaluation procedure, which is checked against the official script on the baseline predictions.')
-after(p, 'The RTX 5090 is a measurement device rather than a claim about consumer-device latency. Latency is therefore interpreted as a hardware-specific comparative measure between the uncompressed and compressed configurations. The results should not be read as universal latency estimates for GPUs with 8–12 GB of VRAM.')
+def disable_auto_numbering(p):
+    ppr = p._p.get_or_add_pPr()
+    old = ppr.find('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}numPr')
+    if old is not None:
+        ppr.remove(old)
+    numpr = OxmlElement('w:numPr')
+    ilvl = OxmlElement('w:ilvl'); ilvl.set('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val', '0')
+    numid = OxmlElement('w:numId'); numid.set('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val', '0')
+    numpr.append(ilvl); numpr.append(numid); ppr.append(numpr)
 
-p = find('A configuration is deployable only when all four criteria are satisfied simultaneously. The memory threshold is grounded in consumer-hardware data, whereas the latency, size, and accuracy thresholds are operational criteria defined for this study. The latency threshold is not proposed as a universal VQA standard, and the size threshold is intentionally strict. Because the baseline stores approximately four billion parameters in 16-bit precision, pruning alone is not expected to satisfy S*, and the pattern of compliance across configurations is itself a result of interest. The accuracy threshold prevents a configuration from being classified as deployable merely because it saves resources. As a descriptive sensitivity check, compliance with a stricter 95% retention level is also reported.')
-p.text = 'A configuration is deployable only when all four criteria are satisfied simultaneously. The 8 GB memory threshold represents the intended consumer-grade deployment envelope. The latency threshold of 2.0 seconds per image–question pair, the 4 GB model-size threshold, and the 90% accuracy-retention threshold are operational criteria defined for this study; they are not presented as universal VQA standards. The 2.0-second criterion is used consistently across configurations to compare relative compression effects on the fixed RTX 5090 platform. A sensitivity check using 95% accuracy retention is also reported.'
-after(p, 'Because the RTX 5090 is substantially more capable than the 8 GB deployment envelope, a configuration that meets the latency criterion on the measurement GPU may not meet it on a lower-end consumer GPU. This distinction is recorded explicitly in the interpretation of results and in the validity threats and limitations.')
+# Consolidate the research questions and objectives to three aligned pairs.
+set_text(doc.paragraphs[207], 'The study is guided by the following three research questions. Each question is grounded in the need to evaluate compression as a measurable deployment problem rather than as a size-reduction exercise alone (Cooper et al., 2021; Li et al., 2023; Mishra et al., 2024).')
+set_text(doc.paragraphs[208], '(a) RQ1: To what extent do structured pruning, INT8 weight-only post-training quantization, and their combination change the peak GPU memory, inference latency, model size, and VQA accuracy of BLIP-3 relative to the uncompressed baseline?')
+set_text(doc.paragraphs[209], '(b) RQ2: How do the visual encoder, multimodal connector, and language model of BLIP-3 differ in their contribution to computational cost and in their sensitivity to structured pruning? This question is motivated by evidence that transformer components are not equally important and that pruning sensitivity can vary across components (Michel et al., 2019; Ma et al., 2023).')
+set_text(doc.paragraphs[210], '(c) RQ3: Which compressed BLIP-3 configurations provide the most favorable efficiency–accuracy trade-off and satisfy the predefined RCVQA deployability criteria? A joint decision is necessary because lower resource use does not by itself establish practical deployability (Cooper et al., 2021; Mishra et al., 2024).')
+set_text(doc.paragraphs[211], '')
+set_text(doc.paragraphs[212], 'The questions follow a sequential logic. RQ1 establishes the overall effects of the compression strategies. RQ2 identifies where computational cost and compression sensitivity are located within BLIP-3. RQ3 integrates these findings through multi-metric trade-off analysis and explicit deployment thresholds.')
+set_text(doc.paragraphs[214], 'The main objective of this study is to evaluate whether post-training compression can make BLIP-3 feasible for resource-constrained VQA deployment while preserving an acceptable level of accuracy. The three specific objectives correspond directly to the research questions and are supported by the need for controlled, reproducible efficiency evaluation (Reddi et al., 2020; Li et al., 2023).')
+set_text(doc.paragraphs[215], '(a) RO1: To measure the changes in peak GPU memory, inference latency, model size, and VQA accuracy produced by structured pruning, INT8 weight-only post-training quantization, and their combination, relative to the uncompressed baseline. These numerical measurements are required to make the efficiency–accuracy trade-off explicit (Cooper et al., 2021; Mishra et al., 2024).')
+set_text(doc.paragraphs[216], '(b) RO2: To compare the computational contribution and pruning sensitivity of the visual encoder, multimodal connector, and language model of BLIP-3, using component-level profiling and parameter-normalized sensitivity analysis (Michel et al., 2019; Ma et al., 2023).')
+set_text(doc.paragraphs[217], '(c) RO3: To identify the compressed configurations with the most favorable efficiency–accuracy profiles, determine which configurations satisfy the RCVQA deployability criteria, and identify the criterion that most limits deployment (Cooper et al., 2021; Miettinen, 1999).')
+set_text(doc.paragraphs[218], '')
+set_text(doc.paragraphs[219], 'Table 1.1 summarizes the alignment among the three research questions, objectives, hypotheses, and analyses.')
 
-p = find("Model compression reduces the memory, storage, and computation required by a neural network while trying to preserve its accuracy (Z. Li et al., 2023). Among the many available techniques, pruning and quantization are the most widely used for large models because they can be applied to an existing pretrained network (Shinde et al., 2025). Their effects on VLMs are more complex than on single-modality models, because VQA accuracy depends on preserving cross-modal alignment, which is the model's ability to correctly connect visual information from the image with the meaning of the question.")
-after(p, 'The broader compression literature provides important alternatives against which the present design should be positioned. LLM.int8() introduced mixed-precision decomposition for outlier-sensitive transformer activations (Dettmers et al., 2022). GPTQ demonstrated accurate post-training weight quantization using approximate second-order information (Frantar et al., 2023), while SparseGPT addressed one-shot pruning of large language models without retraining (Frantar & Alistarh, 2023). SmoothQuant moves quantization difficulty from activations to weights through equivalent transformations (Xiao et al., 2023), and AWQ uses activation-aware protection of salient weights for efficient low-bit inference (Lin et al., 2024). For multimodal models, FastV is relevant because it reduces visual tokens rather than permanently removing structural weights (Chen et al., 2024). These methods motivate the use of round-to-nearest INT8 and activation-informed structural importance as clearly defined baselines, while also showing that the present study does not claim to exhaust the compression design space.')
+# Replace the alignment table with three rows.
+t = doc.tables[0]
+while len(t.rows) > 1:
+    t._tbl.remove(t.rows[-1]._tr)
+add_table_row(t, ['RQ1: Overall effects of pruning, quantization, and combined compression', 'RO1: Measure changes in efficiency and accuracy', 'H1', 'Compare BASE, full-model pruning, INT8 quantization, and combined compression using relative reductions and accuracy retention'])
+add_table_row(t, ['RQ2: Differences among BLIP-3 components', 'RO2: Compare component contribution and pruning sensitivity', 'H2', 'Baseline component profiling and component-level pruning at 10%, 20%, and 30%, with absolute and parameter-normalized sensitivity'])
+add_table_row(t, ['RQ3: Efficiency–accuracy trade-off and deployability', 'RO3: Identify favorable and deployable configurations and the limiting criterion', 'H3 / Descriptive', 'Pareto-based comparison and joint evaluation against memory, latency, model-size, and accuracy-retention criteria'])
 
-p = find('Justification for Selecting BLIP-3')
-q = after(p, 'Preliminary Work', 'INTI-T3')
-after(q, 'A feasibility pilot is planned before the full experiment and will be reported in the final thesis once the measurement environment is available. The pilot will run the uncompressed BLIP-3 baseline on approximately 100 VQAv2 samples and record accuracy, mean latency, and peak GPU memory using the same preprocessing, decoding, synchronization, and scoring procedures specified in this proposal. A second pilot will apply 10% structured pruning to one eligible component and verify successful model construction and forward inference. Because these measurements have not yet been completed, no pilot values are claimed in this proposal. The pilot is intended to de-risk the custom xGen-MM implementation, including fused QKV projections in Phi-3 and the Perceiver Resampler, before the 5,040-question evaluation.')
+# Make the rationale for the quantitative design explicit.
+set_text(doc.paragraphs[348], 'Research Design')
+doc.paragraphs[349].text = doc.paragraphs[349].text  # preserve paragraph position
+quant = ('This study uses a quantitative, controlled comparative experimental design because its central constructs are numerical and directly measurable: VQA accuracy, accuracy retention, peak GPU memory, inference latency, model size, parameter count, and relative reduction. A quantitative design permits the same inputs, preprocessing, decoding settings, hardware, and software to be held constant while the compression configuration is varied, allowing observed differences to be summarized with effect sizes, confidence intervals, and reproducible comparisons (Reddi et al., 2020; Cooper et al., 2021; Efron & Tibshirani, 1993). This approach is appropriate for model-compression benchmarking because deployment decisions depend on measured resource thresholds rather than on subjective judgments (Li et al., 2023; Mishra et al., 2024).')
+set_text(doc.paragraphs[349], quant)
 
-p = find('All subsets are obtained by proportional stratified random sampling by answer type, without replacement, with the random seed fixed at 42. Stratification preserves the natural composition of VQAv2 rather than creating an artificially balanced set.')
-after(p, 'VQAv2 is selected because it is a widely used, publicly documented VQA benchmark with a stable official evaluation protocol and ten human answers per question. This makes it suitable for controlled comparison of small accuracy changes across compression configurations. The study does not claim that VQAv2 represents every xGen-MM capability: tasks such as image-text retrieval, captioning, and text-rich image understanding are outside scope. The single-dataset design is treated as an external-validity limitation, while the controlled benchmark provides a reproducible first test of BLIP-3 compression under explicit resource constraints.')
+# Align the expected-outcomes narrative with the consolidated RQ3.
+set_text(doc.paragraphs[502], '\tFor RQ3, the combined configuration will be compared with pruning-only and quantization-only compression through Pareto analysis and the four deployability criteria. The study will identify any configuration that satisfies all criteria and the criterion that most limits deployment; whether the combined configuration is more favourable will be determined empirically rather than assumed.')
+set_text(doc.paragraphs[503], '')
 
-p = find('External validity is deliberately bounded. The findings concern one BLIP-3 checkpoint, a subset of VQAv2, the selected compression procedures, and one hardware environment. They are not claimed to generalize to all VLMs, datasets, or devices, and deployability conclusions apply only to the scenario defined in Section 3.3.2.')
-p.text = 'External validity is deliberately bounded. The findings concern one BLIP-3 checkpoint, a subset of VQAv2, the selected compression procedures, and one RTX 5090 measurement environment. They are not claimed to generalize to all VLMs, datasets, or devices. In particular, latency findings indicate the relative efficiency effect of compression on the selected hardware rather than universal consumer-device performance. Deployability conclusions apply only to the scenario defined in Section 3.3.2.'
+# Move the existing Chapter 4 material into the end of Chapter 3 as Section 3.17.
+body_children = list(doc.element.body.iterchildren())
+p_by_el = {p._p: i for i, p in enumerate(doc.paragraphs)}
+start_el = doc.paragraphs[507]._p
+end_el = doc.paragraphs[571]._p  # References heading; do not move references.
+start_idx = body_children.index(start_el)
+end_idx = body_children.index(end_el)
+pilot_nodes = body_children[start_idx:end_idx]
+for node in pilot_nodes:
+    doc.element.body.remove(node)
+insert_before = doc.paragraphs[504]._p
+for node in pilot_nodes:
+    insert_before.addprevious(node)
 
-p = find('The study has several limitations. It evaluates one BLIP-3 checkpoint and one dataset, so the results may not transfer to other models or tasks. It uses post-training compression without recovery fine-tuning, which may underestimate the accuracy that compressed models could reach after brief retraining. The same pruning percentage is applied to every layer of a component, which may not be the optimal allocation. The number of latent queries in the connector is kept fixed, so reductions in visual-token length are not examined. Latency results depend on the hardware and the quantization backend, and peak allocated memory excludes the CUDA context. Finally, the thresholds describe one study-defined scenario rather than universal requirements.')
-p.text = 'The study has several limitations. It evaluates one BLIP-3 checkpoint and one VQAv2 dataset, so the results may not transfer to other models, datasets, or tasks. It uses post-training compression without recovery fine-tuning, which may underestimate the accuracy that compressed models could reach after brief retraining. The same pruning percentage is applied to every layer of a component, which may not be the optimal allocation. The number of latent queries in the connector is kept fixed, so reductions in visual-token length are not examined. Latency is measured only on one NVIDIA RTX 5090 with 32 GB of VRAM and therefore does not reproduce the latency of lower-end consumer GPUs. The quantization backend may also affect results, and peak allocated memory excludes the CUDA context. Finally, the thresholds describe one study-defined scenario rather than universal requirements.'
+# Rebuild paragraph/table wrappers after reordering is not necessary for text edits below;
+# use direct XML text replacement for the moved content and captions.
+all_paras = list(doc.paragraphs)
+repls = {
+    'PRELIMINARY RESULTS': 'PILOT STUDY AND PRELIMINARY RESULTS',
+    'Chapter 4': 'Section 3.17',
+    'chapter 4': 'Section 3.17',
+    'Section 4.2': 'Section 3.17.1',
+    'Section 4.3': 'Section 3.17.2',
+    'Section 4.4': 'Section 3.17.3',
+    'Section 4.5': 'Section 3.17.4',
+    'Section 4.6': 'Section 3.17.5',
+    'Table 4.1': 'Table 3.9',
+    'Table 4.2': 'Table 3.10',
+    'Table 4.3': 'Table 3.11',
+    'Table 4.4': 'Table 3.12',
+    'Table 4.5': 'Table 3.13',
+    'Table 4.6': 'Table 3.14',
+    'Table 4.7': 'Table 3.15',
+    'Table 4.8': 'Table 3.16',
+    'Table 4.9': 'Table 3.17',
+    'Table 4.10': 'Table 3.18',
+    'Figure 4.1': 'Figure 3.2',
+}
+for p in all_paras:
+    if not p.text:
+        continue
+    new = p.text
+    for old, val in repls.items():
+        new = new.replace(old, val)
+    if new != p.text:
+        set_text(p, new)
 
-for p in doc.paragraphs:
-    if p.text.startswith('The study uses a quantitative, controlled comparative experimental design.'):
-        p.text = p.text.replace('(Lim, 2025; Slater, 2025)', '(Han et al., 2015; Shuvo et al., 2023)')
+# The old four-question wording may also occur in the hypotheses narrative.
+for p in all_paras:
+    if 'RQ4' in p.text:
+        set_text(p, p.text.replace('RQ4', 'RQ3'))
 
-refs = [
-'Dettmers, T., Lewis, M., Shleifer, S., & Zettlemoyer, L. (2022). LLM.int8(): 8-bit matrix multiplication for transformers at scale. Advances in Neural Information Processing Systems, 35. https://doi.org/10.48550/arXiv.2208.07339',
-'Frantar, E., Ashkboos, S., Hoeftmann, K., & Alistarh, D. (2023). GPTQ: Accurate post-training quantization for generative pre-trained transformers. In International Conference on Learning Representations (ICLR 2023). https://doi.org/10.48550/arXiv.2210.17323',
-'Frantar, E., & Alistarh, D. (2023). SparseGPT: Massive language models can be accurately pruned in one-shot. In International Conference on Machine Learning (ICML 2023). https://doi.org/10.48550/arXiv.2301.00774',
-'Xiao, G., Lin, J., Seifert, C., & Han, S. (2023). SmoothQuant: Accurate and efficient post-training quantization for large language models. In Proceedings of the 40th International Conference on Machine Learning (ICML 2023). https://doi.org/10.48550/arXiv.2211.10438',
-'Lin, J., Tang, J., Tang, H., Yang, S., Dang, X., Gan, C., & Han, S. (2024). AWQ: Activation-aware weight quantization for LLM compression and acceleration. In Proceedings of Machine Learning and Systems, 6, 87–100. https://doi.org/10.48550/arXiv.2306.00978',
-'Chen, L., et al. (2024). FastV: Efficient visual token pruning for large vision-language models. [Preprint]. arXiv. https://doi.org/10.48550/arXiv.2403.06764',
-]
-last = doc.paragraphs[-1]
-for ref in refs:
-    last = after(last, ref, 'INTI-Reference')
+# Improve the pilot section labels and clarify that this is an initial baseline phase.
+for p in all_paras:
+    if p.text == 'Introduction' and p.style.name == 'INIT-T2':
+        # There are two such headings; only the moved one is now after the Chapter 3 content.
+        if p._p.getparent().index(p._p) > 500:
+            set_text(p, 'Pilot Study Introduction')
 
-doc.save(out)
-print(out)
+# Update visible TOC/list entries so the document no longer advertises a Chapter 4.
+for p in all_paras:
+    txt = p.text
+    if txt.startswith('4.1\tIntroduction'):
+        set_text(p, '3.17\tPilot Study and Preliminary Results\t48')
+    elif txt.startswith('4.2\tExperimental Result Validation'):
+        set_text(p, '3.17.1\tExperimental Result Validation\t48')
+    elif txt.startswith('4.2.1'):
+        set_text(p, '3.17.1.1\tDataset and Evaluation Coverage\t48')
+    elif txt.startswith('4.2.2'):
+        set_text(p, '3.17.1.2\tReproducibility and Execution Environment\t49')
+    elif txt.startswith('4.3\tPreliminary Pipeline'):
+        set_text(p, '3.17.2\tPreliminary Pipeline and Structural Results\t49')
+    elif txt.startswith('4.3.1'):
+        set_text(p, '3.17.2.1\tPilot Pipeline Validation\t50')
+    elif txt.startswith('4.3.2'):
+        set_text(p, '3.17.2.2\tBLIP-3 Structural Probe\t50')
+    elif txt.startswith('4.4\tBaseline BLIP-3 Results'):
+        set_text(p, '3.17.3\tBaseline BLIP-3 Results\t51')
+    elif txt.startswith('4.4.1'):
+        set_text(p, '3.17.3.1\tBaseline Accuracy\t51')
+    elif txt.startswith('4.4.2'):
+        set_text(p, '3.17.3.2\tBaseline Response Behaviour\t53')
+    elif txt.startswith('4.4.3'):
+        set_text(p, '3.17.3.3\tBaseline Efficiency\t53')
+    elif txt.startswith('4.4.4'):
+        set_text(p, '3.17.3.4\tBaseline Comparison with Deployability Criteria\t54')
+    elif txt.startswith('4.5\tImplications'):
+        set_text(p, '3.17.4\tImplications for the Main Experiments\t55')
+    elif txt.startswith('4.6\tChapter Summary'):
+        set_text(p, '3.17.5\tPilot Study Summary\t56')
+    elif txt.startswith('PRELIMINARY RESULTS'):
+        set_text(p, '3.17\tPILOT STUDY AND PRELIMINARY RESULTS\t48')
+    elif txt.startswith('Figure 4.1'):
+        set_text(p, txt.replace('Figure 4.1', 'Figure 3.2'))
 
+# Repair any TOC paragraphs that contain legacy and replacement text together.
+toc_exact = {
+    'PRELIMINARY RESULTS\t48PILOT STUDY AND PRELIMINARY RESULTS\t483.17\tPILOT STUDY AND PILOT STUDY AND PRELIMINARY RESULTS\t48': '3.17\tPILOT STUDY AND PRELIMINARY RESULTS\t48',
+}
+for p in all_paras:
+    if p.text in toc_exact:
+        set_text(p, toc_exact[p.text])
+
+# Ensure the moved chapter title is clean after the global label replacements.
+for p in all_paras:
+    if 'PILOT STUDY AND PILOT STUDY AND PRELIMINARY RESULTS' in p.text:
+        if p.style.name.startswith('toc'):
+            set_text(p, '3.17\tPILOT STUDY AND PRELIMINARY RESULTS\t48')
+        else:
+            set_text(p, 'PILOT STUDY AND PRELIMINARY RESULTS')
+
+# Remove the old Chapter 4 list-of-tables entries and replace their labels with Chapter 3 numbering.
+for p in all_paras:
+    txt = p.text
+    for old, val in repls.items():
+        if old == 'PRELIMINARY RESULTS':
+            continue
+        txt = txt.replace(old, val)
+    if txt != p.text:
+        set_text(p, txt)
+
+# Keep the chapter outline accurate.
+for p in all_paras:
+    if 'This thesis is organized into five chapters.' in p.text:
+        set_text(p, p.text.replace('five chapters', 'four chapters'))
+    if p.text.startswith('Chapter 4 reports'):
+        set_text(p, p.text.replace('Chapter 4', 'Section 3.17'))
+    if p.text.startswith('Chapter 5 will'):
+        set_text(p, p.text.replace('Chapter 5', 'Chapter 4'))
+    if 'Draft of Chapter 4' in p.text:
+        set_text(p, p.text.replace('Draft of Chapter 4', 'Draft of the results section'))
+    if p.text.startswith('This chapter reports the preliminary results'):
+        set_text(p, p.text.replace('This chapter reports', 'This section reports').replace('according to Chapter 3', 'in the main experiments'))
+    if 'in the main experiments in the main experiments' in p.text:
+        set_text(p, p.text.replace('in the main experiments in the main experiments', 'in the main experiments'))
+
+# Final cross-reference cleanup after the pilot section has been repositioned.
+for p in all_paras:
+    if 'Chapter 4' in p.text:
+        set_text(p, p.text.replace('Chapter 4', 'Section 3.17'))
+
+for table in doc.tables:
+    for row in table.rows:
+        for cell in row.cells:
+            if 'Chapter 4' in cell.text:
+                cell.text = cell.text.replace('Chapter 4', 'Section 3.17').replace('Draft of Section 3.17', 'Draft of the results section')
+
+# Keep one top-level pilot entry in the visible contents list; the former 4.1
+# entry was the pilot introduction and is intentionally omitted.
+for p in all_paras:
+    if p.style.name == 'toc 1' and p.text.startswith('PILOT STUDY AND PRELIMINARY RESULTS'):
+        set_text(p, '3.17\tPILOT STUDY AND PRELIMINARY RESULTS\t48')
+    if p.style.name.startswith('toc') and p.text == '3.17\tPilot Study and Preliminary Results\t48':
+        set_text(p, '')
+
+# The source template numbers chapter headings automatically. Since the pilot is now
+# inside Chapter 3, use explicit section labels and disable the inherited Chapter-4
+# numbering for the moved headings.
+pilot_heading_numbers = {
+    'Experimental Result Validation': '3.17.1',
+    'Dataset and Evaluation Coverage': '3.17.1.1',
+    'Reproducibility and Execution Environment': '3.17.1.2',
+    'Preliminary Pipeline and Structural Results': '3.17.2',
+    'Pilot Pipeline Validation': '3.17.2.1',
+    'BLIP-3 Structural Probe': '3.17.2.2',
+    'Baseline BLIP-3 Results': '3.17.3',
+    'Baseline Accuracy': '3.17.3.1',
+    'Baseline Response Behaviour': '3.17.3.2',
+    'Baseline Efficiency': '3.17.3.3',
+    'Baseline Comparison with Deployability Criteria': '3.17.3.4',
+    'Implications for the Main Experiments': '3.17.4',
+    'Chapter Summary': '3.17.5',
+}
+for p in all_paras:
+    if p._p in pilot_nodes and p.text in pilot_heading_numbers:
+        disable_auto_numbering(p)
+        set_text(p, pilot_heading_numbers[p.text] + ' ' + p.text)
+    elif p._p in pilot_nodes and p.text == 'Pilot Study Introduction':
+        disable_auto_numbering(p)
+        p.style = doc.styles['Normal']
+    elif p._p in pilot_nodes and p.text.strip() == 'PILOT STUDY AND PRELIMINARY RESULTS':
+        disable_auto_numbering(p)
+        p.style = doc.styles['Normal']
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        set_text(p, 'PILOT STUDY AND PRELIMINARY RESULTS')
+        if p.runs:
+            p.runs[0].bold = True
+            p.runs[0].font.name = 'Times New Roman'
+            p.runs[0].font.size = Pt(12)
+
+doc.save(str(OUT))
+print(OUT)
